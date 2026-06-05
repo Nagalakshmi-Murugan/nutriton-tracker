@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NutriAI - Smart Nutrition Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+          <circle cx="11" cy="11" r="10" stroke="url(#lg1)" stroke-width="2"/>
+          <path d="M6 11 Q11 5 16 11 Q11 17 6 11Z" fill="url(#lg2)"/>
+          <defs>
+            <linearGradient id="lg1" x1="0" y1="0" x2="22" y2="22"><stop offset="0%" stop-color="#4ade80"/><stop offset="100%" stop-color="#22d3ee"/></linearGradient>
+            <linearGradient id="lg2" x1="0" y1="0" x2="22" y2="22"><stop offset="0%" stop-color="#4ade80"/><stop offset="100%" stop-color="#22d3ee"/></linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <span class="logo-text">NutriAI</span>
+    </div>
+
+    <div class="sidebar-section-label">MENU</div>
+    <nav>
+      <a href="#section-dashboard" class="nav-link active" data-section="section-dashboard">
+        <span class="nav-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span>
+        Dashboard
+      </a>
+      <a href="#section-foods" class="nav-link" data-section="section-foods">
+        <span class="nav-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg></span>
+        Foods
+      </a>
+      <a href="#section-history" class="nav-link" data-section="section-history">
+        <span class="nav-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
+        Meal History
+      </a>
+      <a href="#section-goals" class="nav-link" data-section="section-goals">
+        <span class="nav-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></span>
+        Goals
+      </a>
+      <a href="#section-insights" class="nav-link" data-section="section-insights">
+        <span class="nav-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></span>
+        AI Insights
+      </a>
+    </nav>
+
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section-label">TODAY</div>
+    <div class="sidebar-stat">
+      <span class="stat-dot dot-green"></span>
+      <span>Calories</span>
+      <span class="stat-val" id="sidebarCalories">—</span>
+    </div>
+    <div class="sidebar-stat">
+      <span class="stat-dot dot-blue"></span>
+      <span>Protein</span>
+      <span class="stat-val" id="sidebarProtein">—</span>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="avatar">N</div>
+      <div class="avatar-info">
+        <span class="avatar-name">Nutritionist</span>
+        <span class="avatar-sub">Free Plan</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <h1 class="page-title">Dashboard</h1>
+        <span class="page-date" id="pageDate"></span>
+      </div>
+      <div class="topbar-right">
+        <div class="search-wrap">
+          <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input id="searchInput" placeholder="Search foods…" />
+        </div>
+        <button class="add-btn" onclick="document.getElementById('section-foods').scrollIntoView({behavior:'smooth'}); setTimeout(()=>document.getElementById('foodName').focus(), 400);">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add Food
+        </button>
+      </div>
+    </header>
+
+    <!-- DATE NAVIGATOR -->
+    <div class="date-nav" id="section-dashboard">
+      <button class="date-nav-btn" id="btnPrevDay" type="button">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div class="date-nav-center">
+        <span class="date-nav-label" id="currentDateLabel">Today</span>
+        <input type="date" id="datePicker" class="date-picker-input" />
+      </div>
+      <button class="date-nav-btn" id="btnNextDay" type="button">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div>
+
+    <!-- HERO STATS -->
+    <section class="dashboard">
+      <div class="card calories">
+        <div class="card-header"><span class="card-label">Total Calories</span><div class="card-badge badge-red">kcal</div></div>
+        <p id="totalCalories" class="card-value">0</p>
+        <div class="card-bar"><div class="bar-fill bar-red" style="width:0%"></div></div>
+      </div>
+      <div class="card protein">
+        <div class="card-header"><span class="card-label">Protein</span><div class="card-badge badge-blue">g</div></div>
+        <p id="totalProtein" class="card-value">0</p>
+        <div class="card-bar"><div class="bar-fill bar-blue" style="width:0%"></div></div>
+      </div>
+      <div class="card carbs">
+        <div class="card-header"><span class="card-label">Carbohydrates</span><div class="card-badge badge-green">g</div></div>
+        <p id="totalCarbs" class="card-value">0</p>
+        <div class="card-bar"><div class="bar-fill bar-green" style="width:0%"></div></div>
+      </div>
+      <div class="card fat">
+        <div class="card-header"><span class="card-label">Total Fat</span><div class="card-badge badge-amber">g</div></div>
+        <p id="totalFat" class="card-value">0</p>
+        <div class="card-bar"><div class="bar-fill bar-amber" style="width:0%"></div></div>
+      </div>
+    </section>
+
+    <!-- WIDGET GRID -->
+    <section class="grid" id="section-goals">
+      <div class="panel">
+        <div class="panel-icon icon-fire">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2c0 0-5 5-5 11a5 5 0 0010 0c0-6-5-11-5-11z"/></svg>
+        </div>
+        <div class="panel-body">
+          <h4 class="panel-label">Highest Calorie Food</h4>
+          <p id="highestFood" class="panel-value">No data yet</p>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-icon icon-avg">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><polyline points="8 8 3 12 8 16"/><polyline points="16 8 21 12 16 16"/></svg>
+        </div>
+        <div class="panel-body">
+          <h4 class="panel-label">Average Calories / Item</h4>
+          <p id="averageCalories" class="panel-value">0 <span class="panel-unit">kcal</span></p>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-icon icon-score">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        </div>
+        <div class="panel-body">
+          <h4 class="panel-label">Health Score</h4>
+          <p id="healthScore" class="panel-value">0 <span class="panel-unit">/ 100</span></p>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-icon icon-goal">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+        </div>
+        <div class="panel-body">
+          <h4 class="panel-label">Daily Calorie Goal</h4>
+          <div class="goal-input-row">
+            <input id="goalInput" placeholder="e.g. 2000" type="number"/>
+            <button onclick="setGoal()" class="goal-btn" type="button">Set</button>
+          </div>
+          <p id="goalStatus" class="goal-status">No goal set</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- AI INSIGHTS -->
+    <section class="insights" id="section-insights">
+      <div class="insights-header">
+        <div class="ai-badge">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          AI
+        </div>
+        <h2 class="insights-title">Smart Insights</h2>
+      </div>
+      <p id="recommendation" class="insight-text">Add some foods to unlock personalized nutrition recommendations.</p>
+    </section>
+
+    <!-- MEAL HISTORY -->
+    <section class="history-card" id="section-history">
+      <div class="history-header">
+        <h2>Meal History</h2>
+        <p class="history-sub">Your food log for the last 30 days</p>
+      </div>
+      <div id="historyList" class="history-list">
+        <p class="history-loading">Loading history…</p>
+      </div>
+    </section>
+
+    <!-- ADD FOOD FORM -->
+    <section class="form-card" id="section-foods">
+      <div class="form-header">
+        <h2>Log Food Entry</h2>
+        <p class="form-sub">Entries are always saved to <strong>today</strong></p>
+      </div>
+
+      <form id="foodForm">
+        <div class="form-row">
+          <div class="form-field">
+            <label for="foodName">Food Name</label>
+            <input type="text" id="foodName" name="foodName" placeholder="e.g. Chicken Breast" required autocomplete="off">
+          </div>
+          <div class="form-field">
+            <label for="calories">Calories</label>
+            <input type="number" id="calories" name="calories" placeholder="kcal" min="0" required>
+          </div>
+          <div class="form-field">
+            <label for="protein">Protein (g)</label>
+            <input type="number" id="protein" name="protein" placeholder="g" min="0" required>
+          </div>
+          <div class="form-field">
+            <label for="carbs">Carbs (g)</label>
+            <input type="number" id="carbs" name="carbs" placeholder="g" min="0" required>
+          </div>
+          <div class="form-field">
+            <label for="fat">Fat (g)</label>
+            <input type="number" id="fat" name="fat" placeholder="g" min="0" required>
+          </div>
+        </div>
+        <div class="form-submit-row">
+          <button type="submit" class="form-submit-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add Entry
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <!-- FOOD TABLE -->
+    <section class="table-card">
+      <div class="table-header">
+        <div>
+          <h2>Food Database</h2>
+          <p class="table-sub">Entries for <span id="currentDateLabel2">Today</span></p>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Food</th><th>Calories</th><th>Protein</th><th>Carbs</th><th>Fat</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="foodTable"></tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  // Set today's date in topbar
+  document.getElementById("pageDate").textContent = new Date().toLocaleDateString("en-US", {
+    weekday: "long", month: "long", day: "numeric"
+  });
+
+  // Nav smooth scroll + active state
+  document.querySelectorAll(".nav-link").forEach(link => {
+    link.addEventListener("click", function(e) {
+      e.preventDefault();
+      const target = document.getElementById(this.dataset.section);
+      if (target) target.scrollIntoView({ behavior: "smooth" });
+      document.querySelectorAll(".nav-link").forEach(l => l.classList.remove("active"));
+      this.classList.add("active");
+    });
+  });
+
+  // Keep table subtitle synced to date label
+  const obs = new MutationObserver(() => {
+    const lbl2 = document.getElementById("currentDateLabel2");
+    if (lbl2) lbl2.textContent = document.getElementById("currentDateLabel").textContent;
+  });
+  obs.observe(document.getElementById("currentDateLabel"), { childList: true, characterData: true, subtree: true });
+</script>
+<script src="script.js"></script>
+</body>
+</html>
