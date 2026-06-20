@@ -2,7 +2,7 @@
 
 > A full-stack nutrition tracking web application with daily meal logging, macro analytics, meal history, and a responsive dark-mode dashboard — evolved from a C++ console application into a production-ready web app.
 
-![Dashboard](screenshots/dashboard.png)
+![Dashboard](screenshots/image.png)
 
 ---
 
@@ -476,7 +476,7 @@ All endpoints return `500 Internal Server Error` with a plain-text message if a 
 > Add your screenshots to the `screenshots/` folder and update the paths below.
 
 ### Dashboard — Live Macro Stats
-![Dashboard](screenshots/dashboard.png)
+![Dashboard](screenshots/imagedashboard2.png)
 
 ### Meal History — 30-Day Log
 ![Meal History](screenshots/history.png)
