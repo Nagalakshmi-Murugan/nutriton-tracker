@@ -472,9 +472,6 @@ All endpoints return `500 Internal Server Error` with a plain-text message if a 
 ---
 
 ## 📸 Screenshots
-
-> Add your screenshots to the `screenshots/` folder and update the paths below.
-
 ### Dashboard — Live Macro Stats
 ![Dashboard](screenshots/imagedashboard2.png)
 
