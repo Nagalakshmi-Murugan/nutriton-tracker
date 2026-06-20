@@ -13,7 +13,11 @@ const datePicker = document.getElementById("datePicker");
 const dateLabel  = document.getElementById("currentDateLabel");
 
 function todayStr() {
-    return new Date().toISOString().split("T")[0];
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, "0");
+    const d = String(now.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
 }
 
 function cleanDate(dateStr) {
@@ -24,9 +28,13 @@ function formatDateLabel(dateStr) {
     const clean = cleanDate(dateStr);
     const d = new Date(clean + "T00:00:00");
     if (clean === todayStr()) return "Today";
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    if (clean === yesterday.toISOString().split("T")[0]) return "Yesterday";
+    const yest = new Date();
+    yest.setDate(yest.getDate() - 1);
+    const yy = yest.getFullYear();
+    const ym = String(yest.getMonth() + 1).padStart(2, "0");
+    const yd = String(yest.getDate()).padStart(2, "0");
+    const yesterdayStr = `${yy}-${ym}-${yd}`;
+    if (clean === yesterdayStr) return "Yesterday";
     return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
 }
 
