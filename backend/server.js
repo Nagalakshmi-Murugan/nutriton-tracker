@@ -22,6 +22,17 @@ app.get("/", (req, res) => {
     res.send("Backend Running");
 });
 
+// ── food reference database (per-100g nutrition lookup) ────
+// Used by the "Add Food" form to populate the food search list
+// and to look up per-100g values on the server before saving.
+app.get("/api/food-database", (req, res) => {
+    db.query("SELECT id, name, default_unit, reference_quantity, calories_per_reference, protein_per_reference, carbs_per_reference, fat_per_reference FROM food_database ORDER BY name ASC",
+        (err, result) => {
+        if (err) { console.error(err); return res.status(500).send("Error fetching food database"); }
+        res.json(result);
+    });
+});
+
 app.get("/foods", (req, res) => {
     const date = req.query.date || localDateStr();
     db.query("SELECT * FROM foods WHERE logged_date = ? ORDER BY id DESC", [date], (err, result) => {
@@ -30,13 +41,57 @@ app.get("/foods", (req, res) => {
     });
 });
 
+// The client sends only { name, quantity }. The unit is never taken from
+// the client — it always comes from that food's row in food_database, so
+// a request can't claim "200 pieces of rice" or similar. This also means
+// the same formula works for every measurement type:
+//   nutrition = per_reference value x (quantity / reference_quantity)
+// For Rice (grams, reference_quantity=100) that's the familiar /100 math.
+// For Egg (piece, reference_quantity=1) it's just "x quantity" — the
+// same formula, no special-casing needed.
 app.post("/foods", (req, res) => {
-    const { name, calories, protein, carbs, fat } = req.body;
-    const date = localDateStr();
-    db.query("INSERT INTO foods (name, calories, protein, carbs, fat, logged_date) VALUES (?, ?, ?, ?, ?, ?)",
-        [name, calories, protein, carbs, fat, date], (err) => {
-        if (err) { console.error(err); return res.status(500).send("Error adding food"); }
-        res.send("Food added successfully");
+    const { name, quantity } = req.body;
+
+    if (!name || typeof name !== "string" || !name.trim()) {
+        return res.status(400).send("Food is required");
+    }
+
+    const qty = Number(quantity);
+    if (quantity === undefined || quantity === "" || Number.isNaN(qty)) {
+        return res.status(400).send("Quantity must be a number");
+    }
+    if (qty <= 0) {
+        return res.status(400).send("Quantity must be greater than 0");
+    }
+
+    db.query("SELECT * FROM food_database WHERE name = ?", [name.trim()], (err, rows) => {
+        if (err) { console.error(err); return res.status(500).send("Error looking up food"); }
+        if (rows.length === 0) return res.status(404).send("Food not found");
+
+        const item = rows[0];
+
+        // Sensible upper bound depends on the unit: 50 pieces of egg is
+        // already unrealistic, but 5000g/5000ml of something is not.
+        const maxQty = item.default_unit === "piece" ? 50 : 5000;
+        if (qty > maxQty) {
+            return res.status(400).send(`Quantity is too large (max ${maxQty} ${item.default_unit})`);
+        }
+
+        const factor   = qty / item.reference_quantity;
+        const calories = Math.round(item.calories_per_reference * factor);
+        const protein  = Math.round(item.protein_per_reference  * factor);
+        const carbs    = Math.round(item.carbs_per_reference    * factor);
+        const fat      = Math.round(item.fat_per_reference      * factor * 10) / 10;
+        const date     = localDateStr();
+
+        db.query(
+            "INSERT INTO foods (name, quantity_amount, quantity_unit, calories, protein, carbs, fat, logged_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            [item.name, qty, item.default_unit, calories, protein, carbs, fat, date],
+            (err) => {
+                if (err) { console.error(err); return res.status(500).send("Error adding food"); }
+                res.send("Food added successfully");
+            }
+        );
     });
 });
 

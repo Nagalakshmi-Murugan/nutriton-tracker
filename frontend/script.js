@@ -1,5 +1,6 @@
-const API      = "http://localhost:3000/foods";
-const HIST_API = "http://localhost:3000/history";
+const API       = "http://localhost:3000/foods";
+const HIST_API  = "http://localhost:3000/history";
+const FOODDB_API = "http://localhost:3000/api/food-database";
 
 const form        = document.getElementById("foodForm");
 const table       = document.getElementById("foodTable");
@@ -7,6 +8,146 @@ const searchInput = document.getElementById("searchInput");
 
 let allFoods    = [];
 let calorieGoal = 0;
+
+// ── nutrition preview + dynamic unit + suggested servings ───
+const foodNameInput   = document.getElementById("foodName");
+const quantityInput   = document.getElementById("quantity");
+const previewNote     = document.getElementById("previewNote");
+const unitLabel       = document.getElementById("unitLabel");
+const servingWrap     = document.getElementById("servingShortcuts");
+const servingButtons  = document.getElementById("servingButtons");
+
+let lastSelectedFoodName = null; // tracks the previous food so we only reset quantity when the user actually switches to a different food
+
+// Human-friendly label for a unit, pluralized for pieces.
+// (No food names here — purely based on the unit string from the DB.)
+function unitLabelText(unit, qty) {
+    if (unit === "piece") return qty === 1 ? "piece" : "pieces";
+    return unit || "";
+}
+
+// Returns the matching food_database row for whatever the user has
+// currently typed, or null if it doesn't match a known food.
+function getSelectedFood() {
+    const typed = foodNameInput.value.trim().toLowerCase();
+    return typed ? foodDatabaseByName[typed] || null : null;
+}
+
+// Builds suggested-serving quick buttons purely from the food's own
+// unit + reference_quantity — never from a hardcoded food name.
+function buildServingShortcuts(food) {
+    servingButtons.innerHTML = "";
+    if (!food) { servingWrap.style.display = "none"; return; }
+
+    const ref = Number(food.reference_quantity);
+    let values;
+    if (food.default_unit === "piece") {
+        values = [1, 2, 3, 4];
+    } else {
+        values = [ref, Math.round(ref * 1.5), ref * 2];
+    }
+
+    values.forEach(v => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "serving-btn";
+        btn.textContent = food.default_unit === "piece" ? String(v) : `${v} ${food.default_unit}`;
+        btn.addEventListener("click", () => {
+            quantityInput.value = v;
+            updateNutritionPreview();
+        });
+        servingButtons.appendChild(btn);
+    });
+
+    const customBtn = document.createElement("button");
+    customBtn.type = "button";
+    customBtn.className = "serving-btn";
+    customBtn.textContent = "Custom";
+    customBtn.addEventListener("click", () => quantityInput.focus());
+    servingButtons.appendChild(customBtn);
+
+    servingWrap.style.display = "flex";
+}
+
+function updateNutritionPreview() {
+    const food = getSelectedFood();
+    const qty  = Number(quantityInput.value);
+
+    const calEl = document.getElementById("previewCalories");
+    const proEl = document.getElementById("previewProtein");
+    const carEl = document.getElementById("previewCarbs");
+    const fatEl = document.getElementById("previewFat");
+
+    // Whenever the selected food changes, refresh its unit label,
+    // suggested-serving buttons, and default the quantity to its
+    // reference amount so the field never shows a stale grams value
+    // for a food that's actually measured in pieces or ml.
+    const currentName = food ? food.name : null;
+    if (currentName !== lastSelectedFoodName) {
+        lastSelectedFoodName = currentName;
+        buildServingShortcuts(food);
+        if (food) quantityInput.value = food.reference_quantity;
+    }
+
+    unitLabel.textContent = food ? unitLabelText(food.default_unit, Number(quantityInput.value)) : "—";
+
+    if (!food) {
+        calEl.textContent = proEl.textContent = carEl.textContent = fatEl.textContent = "—";
+        previewNote.textContent = foodNameInput.value.trim()
+            ? "No matching food in the database. Pick one from the list."
+            : "Select a food from the list above to see estimated nutrition.";
+        previewNote.classList.toggle("preview-error", !!foodNameInput.value.trim());
+        return;
+    }
+
+    const currentQty = Number(quantityInput.value);
+    if (!currentQty || currentQty <= 0 || Number.isNaN(currentQty)) {
+        calEl.textContent = proEl.textContent = carEl.textContent = fatEl.textContent = "—";
+        previewNote.textContent = "Enter a quantity to calculate nutrition.";
+        previewNote.classList.remove("preview-error");
+        return;
+    }
+
+    // Core calculation, generalized for any unit:
+    // nutrition = per_reference value x (quantity / reference_quantity)
+    const factor = currentQty / Number(food.reference_quantity);
+    calEl.textContent = Math.round(food.calories_per_reference * factor) + " kcal";
+    proEl.textContent = Math.round(food.protein_per_reference  * factor) + " g";
+    carEl.textContent = Math.round(food.carbs_per_reference    * factor) + " g";
+    fatEl.textContent = (Math.round(food.fat_per_reference * factor * 10) / 10) + " g";
+
+    const unitText = unitLabelText(food.default_unit, currentQty);
+    previewNote.textContent = `Estimated for ${currentQty} ${unitText} of ${food.name}. Values are approximate reference data, not medical advice.`;
+    previewNote.classList.remove("preview-error");
+}
+
+foodNameInput.addEventListener("input", updateNutritionPreview);
+quantityInput.addEventListener("input", updateNutritionPreview);
+
+// ── food reference database ─────────────────────────────────
+// foodDatabaseByName lets us look up a selected food instantly,
+// without another network request, every time the quantity changes.
+let foodDatabaseByName = {};
+
+async function loadFoodDatabase() {
+    try {
+        const res  = await fetch(FOODDB_API);
+        const data = await res.json();
+        foodDatabaseByName = {};
+        const datalist = document.getElementById("foodDatalist");
+        datalist.innerHTML = "";
+        data.forEach(item => {
+            // Store using a lowercase key so lookups are case-insensitive
+            // (e.g. "rice" and "Rice" both match).
+            foodDatabaseByName[item.name.toLowerCase()] = item;
+            const option = document.createElement("option");
+            option.value = item.name;
+            datalist.appendChild(option);
+        });
+    } catch (err) {
+        console.error("loadFoodDatabase error:", err);
+    }
+}
 
 // ── date helpers ──────────────────────────────────────────
 const datePicker = document.getElementById("datePicker");
@@ -74,32 +215,53 @@ document.getElementById("btnNextDay").addEventListener("click", function() {
 });
 
 // ── add food ──────────────────────────────────────────────
+// The user only provides a food (picked from the datalist) and a
+// quantity in grams. We do a quick client-side sanity check for a
+// friendly error message, but the server always recalculates and
+// re-validates before saving — the frontend check is just for UX.
 form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    const nameVal     = document.getElementById("foodName") || document.getElementById("name");
-    const caloriesVal = document.getElementById("calories");
-    const proteinVal  = document.getElementById("protein");
-    const carbsVal    = document.getElementById("carbs");
-    const fatVal      = document.getElementById("fat");
+    const food = getSelectedFood();
+    const qty  = Number(quantityInput.value);
 
-    const food = {
-        name:     nameVal.value,
-        calories: caloriesVal.value,
-        protein:  proteinVal.value,
-        carbs:    carbsVal.value,
-        fat:      fatVal.value
-    };
+    if (!food) {
+        previewNote.textContent = "Please pick a valid food from the list before adding.";
+        previewNote.classList.add("preview-error");
+        foodNameInput.focus();
+        return;
+    }
+    if (!qty || Number.isNaN(qty) || qty <= 0) {
+        previewNote.textContent = "Please enter a quantity greater than 0.";
+        previewNote.classList.add("preview-error");
+        quantityInput.focus();
+        return;
+    }
+    const maxQty = food.default_unit === "piece" ? 50 : 5000;
+    if (qty > maxQty) {
+        previewNote.textContent = `That quantity looks too large (max ${maxQty} ${unitLabelText(food.default_unit, maxQty)}).`;
+        previewNote.classList.add("preview-error");
+        quantityInput.focus();
+        return;
+    }
 
     try {
         const res = await fetch(API, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(food)
+            body: JSON.stringify({ name: food.name, quantity: qty })
         });
-        const text = await res.text();
-        console.log("Server response:", text);
+
+        if (!res.ok) {
+            const message = await res.text();
+            previewNote.textContent = message || "Could not add food.";
+            previewNote.classList.add("preview-error");
+            return;
+        }
+
         form.reset();
+        quantityInput.value = 100;
+        updateNutritionPreview();
         datePicker.value = todayStr();
         if (dateLabel) dateLabel.textContent = "Today";
         loadFoods();
@@ -119,8 +281,10 @@ function renderFoods(foods) {
     }
     foods.forEach(food => {
         const row = document.createElement("tr");
+        const unit = food.quantity_unit || (food.quantity_amount ? "grams" : null);
+        const qtyLabel = food.quantity_amount ? ` <span class="qty-tag">(${food.quantity_amount} ${unit})</span>` : "";
         row.innerHTML = `
-            <td>${food.name}</td>
+            <td>${food.name}${qtyLabel}</td>
             <td>${food.calories} kcal</td>
             <td>${food.protein}g</td>
             <td>${food.carbs}g</td>
@@ -290,5 +454,6 @@ async function editFood(id, name, calories, protein, carbs, fat) {
 }
 
 // ── init ──────────────────────────────────────────────────
+loadFoodDatabase();
 loadFoods();
 loadHistory();

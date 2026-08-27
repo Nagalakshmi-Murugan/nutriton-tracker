@@ -202,30 +202,39 @@
       <form id="foodForm">
         <div class="form-row">
           <div class="form-field">
-            <label for="foodName">Food Name</label>
-            <input type="text" id="foodName" name="foodName" placeholder="e.g. Chicken Breast" required autocomplete="off">
+            <label for="foodName">Food</label>
+            <input type="text" id="foodName" name="foodName" placeholder="Search food… e.g. Rice" list="foodDatalist" required autocomplete="off">
+            <datalist id="foodDatalist"></datalist>
           </div>
           <div class="form-field">
-            <label for="calories">Calories</label>
-            <input type="number" id="calories" name="calories" placeholder="kcal" min="0" required>
-          </div>
-          <div class="form-field">
-            <label for="protein">Protein (g)</label>
-            <input type="number" id="protein" name="protein" placeholder="g" min="0" required>
-          </div>
-          <div class="form-field">
-            <label for="carbs">Carbs (g)</label>
-            <input type="number" id="carbs" name="carbs" placeholder="g" min="0" required>
-          </div>
-          <div class="form-field">
-            <label for="fat">Fat (g)</label>
-            <input type="number" id="fat" name="fat" placeholder="g" min="0" required>
+            <label for="quantity">Quantity</label>
+            <div class="quantity-row">
+              <input type="number" id="quantity" name="quantity" placeholder="e.g. 150" min="1" value="100" required>
+              <span id="unitLabel" class="unit-label">—</span>
+            </div>
           </div>
         </div>
+
+        <div id="servingShortcuts" class="serving-shortcuts" style="display:none;">
+          <span class="serving-label">Suggested serving</span>
+          <div id="servingButtons" class="serving-buttons"></div>
+        </div>
+
+        <div id="nutritionPreview" class="nutrition-preview">
+          <span class="preview-title">Nutrition Preview</span>
+          <div class="preview-grid">
+            <span>Calories: <strong id="previewCalories">—</strong></span>
+            <span>Protein: <strong id="previewProtein">—</strong></span>
+            <span>Carbs: <strong id="previewCarbs">—</strong></span>
+            <span>Fat: <strong id="previewFat">—</strong></span>
+          </div>
+          <p id="previewNote" class="preview-note">Select a food from the list above to see estimated nutrition.</p>
+        </div>
+
         <div class="form-submit-row">
           <button type="submit" class="form-submit-btn">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Add Entry
+            Add Food
           </button>
         </div>
       </form>

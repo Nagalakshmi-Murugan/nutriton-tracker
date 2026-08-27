@@ -406,9 +406,56 @@ nav a.active .nav-icon { opacity: 1; color: var(--green); }
 
 .form-row {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+  grid-template-columns: 2fr 1fr;
   gap: 12px;
 }
+
+.nutrition-preview {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: rgba(74,222,128,0.04);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.preview-title {
+  font-size: 11px; font-weight: 600;
+  letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted);
+}
+.preview-grid {
+  display: flex; flex-wrap: wrap; gap: 16px;
+  font-size: 14px; color: var(--text-primary);
+}
+.preview-grid strong { color: var(--green); }
+.preview-note { font-size: 12px; color: var(--text-muted); margin: 0; }
+.preview-note.preview-error { color: #f87171; }
+
+.qty-tag { font-size: 12px; color: var(--text-muted); }
+
+.quantity-row { display: flex; align-items: center; gap: 8px; }
+.quantity-row input { flex: 1; }
+.unit-label {
+  font-size: 12px; font-weight: 600; color: var(--text-muted);
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 10px 12px;
+  white-space: nowrap;
+}
+
+.serving-shortcuts { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.serving-label {
+  font-size: 11px; font-weight: 600;
+  letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted);
+}
+.serving-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+.serving-btn {
+  padding: 6px 14px; border-radius: 999px;
+  border: 1px solid var(--border); background: var(--bg);
+  color: var(--text-primary); font-size: 13px; font-family: inherit;
+  cursor: pointer; transition: var(--transition);
+}
+.serving-btn:hover { border-color: rgba(74,222,128,0.5); color: var(--green); }
+.serving-btn.active { background: rgba(74,222,128,0.12); border-color: var(--green); color: var(--green); }
 
 .form-field { display: flex; flex-direction: column; gap: 6px; }
 
@@ -508,7 +555,7 @@ td button:nth-child(2):hover { background: rgba(248,113,113,0.2); }
 /* ─── RESPONSIVE ─── */
 @media (max-width: 1100px) {
   .dashboard { grid-template-columns: repeat(2,1fr); }
-  .form-row  { grid-template-columns: 1fr 1fr 1fr; }
+  .form-row  { grid-template-columns: 2fr 1fr; }
 }
 @media (max-width: 860px) {
   .app { flex-direction: column; }

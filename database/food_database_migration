@@ -1,0 +1,120 @@
+-- ============================================================
+-- Rebuild food_database only (safe to re-run anytime)
+-- Does NOT touch the "foods" table or any logged history.
+-- ============================================================
+
+USE nutrition_tracker;
+
+DROP TABLE IF EXISTS food_database;
+
+CREATE TABLE food_database (
+    id                  INT AUTO_INCREMENT PRIMARY KEY,
+    name                VARCHAR(100) NOT NULL UNIQUE,
+    calories_per_100g   DECIMAL(6,1) NOT NULL,
+    protein_per_100g    DECIMAL(6,1) NOT NULL,
+    carbs_per_100g      DECIMAL(6,1) NOT NULL,
+    fat_per_100g        DECIMAL(6,1) NOT NULL
+);
+
+INSERT INTO food_database (name, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g) VALUES
+('Rice',          130.0,  2.7, 28.0,  0.3),
+('Roti',          300.0, 11.0, 58.0,  3.0),
+('Egg',           155.0, 13.0,  1.1, 11.0),
+('Chicken',       165.0, 31.0,  0.0,  3.6),
+('Milk',           61.0,  3.2,  4.8,  3.3),
+('Banana',         89.0,  1.1, 23.0,  0.3),
+('Apple',          52.0,  0.3, 14.0,  0.2),
+('Oats',          389.0, 17.0, 66.0,  7.0),
+('Dal',           116.0,  9.0, 20.0,  0.4),
+('Potato',         87.0,  1.9, 20.0,  0.1),
+('Tomato',         18.0,  0.9,  3.9,  0.2),
+('Paneer',        265.0, 18.0,  1.2, 21.0),
+('Curd',           60.0,  3.5,  4.7,  3.3),
+('Bread',         265.0,  9.0, 49.0,  3.2);
+
+-- After this, run food_units_migration.sql (the CHANGE COLUMN /
+-- ADD COLUMN / UPDATE statements) to bring it up to Phase 2 shape.
+
+-- ============================================================
+-- Migration: Per-Food Measurement Units (Phase 2)
+-- ============================================================
+-- Run this AFTER food_database_migration.sql.
+-- Non-destructive: renames two columns (data is preserved) and
+-- adds two new columns with safe defaults, then updates only the
+-- foods that are naturally measured by count instead of weight.
+-- ============================================================
+
+USE nutrition_tracker;
+
+-- ------------------------------------------------------------
+-- 1. Rename the "per_100g" columns to "per_reference".
+--    Not every food's reference amount is 100g anymore (e.g. an
+--    egg's reference is "1 piece"), so the old name no longer
+--    describes what the column holds. Renaming keeps the data,
+--    it just relabels the column.
+-- ------------------------------------------------------------
+ALTER TABLE food_database
+  CHANGE COLUMN calories_per_100g calories_per_reference DECIMAL(6,1) NOT NULL,
+  CHANGE COLUMN protein_per_100g  protein_per_reference  DECIMAL(6,1) NOT NULL,
+  CHANGE COLUMN carbs_per_100g    carbs_per_reference     DECIMAL(6,1) NOT NULL,
+  CHANGE COLUMN fat_per_100g      fat_per_reference       DECIMAL(6,1) NOT NULL;
+
+-- ------------------------------------------------------------
+-- 2. Add the two new columns that describe HOW a food is measured.
+--    default_unit:        'grams' | 'ml' | 'piece'
+--    reference_quantity:  how many of that unit the *_per_reference
+--                          columns above are describing.
+--    Every existing row defaults to grams/100, which matches what
+--    they already meant before this migration — no data changes yet.
+-- ------------------------------------------------------------
+ALTER TABLE food_database
+  ADD COLUMN default_unit VARCHAR(20) NOT NULL DEFAULT 'grams' AFTER name,
+  ADD COLUMN reference_quantity DECIMAL(6,1) NOT NULL DEFAULT 100 AFTER default_unit;
+
+-- ------------------------------------------------------------
+-- 3. Switch specific foods to their natural unit.
+--    Milk is measured by volume; Egg, Apple, Banana, and Roti are
+--    naturally counted in pieces. Values below are approximate
+--    reference servings (e.g. "1 medium apple"), not medical advice.
+-- ------------------------------------------------------------
+UPDATE food_database SET default_unit = 'ml' WHERE name = 'Milk';
+
+UPDATE food_database
+SET default_unit = 'piece', reference_quantity = 1,
+    calories_per_reference = 70, protein_per_reference = 6,
+    carbs_per_reference = 0.6, fat_per_reference = 5
+WHERE name = 'Egg';
+
+UPDATE food_database
+SET default_unit = 'piece', reference_quantity = 1,
+    calories_per_reference = 95, protein_per_reference = 0.5,
+    carbs_per_reference = 25, fat_per_reference = 0.3
+WHERE name = 'Apple';
+
+UPDATE food_database
+SET default_unit = 'piece', reference_quantity = 1,
+    calories_per_reference = 105, protein_per_reference = 1.3,
+    carbs_per_reference = 27, fat_per_reference = 0.4
+WHERE name = 'Banana';
+
+UPDATE food_database
+SET default_unit = 'piece', reference_quantity = 1,
+    calories_per_reference = 120, protein_per_reference = 3,
+    carbs_per_reference = 18, fat_per_reference = 3.7
+WHERE name = 'Roti';
+
+-- Rice, Roti(handled above), Chicken, Dal, Potato, Tomato, Paneer,
+-- Curd, Bread, Oats keep default_unit='grams', reference_quantity=100
+-- (no change needed — that's already the column default).
+
+-- ------------------------------------------------------------
+-- 4. Additive change to the food log table ("foods").
+--    quantity_grams only ever meant grams; now that quantity can be
+--    grams, ml, or pieces, we rename it to the neutral
+--    quantity_amount and add quantity_unit alongside it. Existing
+--    logged rows keep their numeric value under the new column name;
+--    their quantity_unit is NULL (safe to treat as legacy "grams").
+-- ------------------------------------------------------------
+ALTER TABLE foods
+  CHANGE COLUMN quantity_grams quantity_amount INT NULL,
+  ADD COLUMN quantity_unit VARCHAR(20) NULL AFTER quantity_amount;
