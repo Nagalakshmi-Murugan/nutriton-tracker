@@ -384,18 +384,31 @@ async function loadFoods() {
             goalEl.style.color = remaining >= 0 ? "" : "#f87171";
         }
 
-        let score = 100;
-        if (totalCalories > 2000) score -= 20;
-        if (totalProtein  < 50)   score -= 20;
-        if (totalFat      > 70)   score -= 20;
-        if (totalCarbs    > 300)  score -= 20;
+        // Health score: each macro contributes up to 25 points (100 total).
+        // - Protein climbs toward its 25-point cap as intake approaches a
+        //   50g target, so 3g and 19g score differently instead of both
+        //   just tripping the same "under 50" flag.
+        // - Calories/fat/carbs keep their full 25 points while under a
+        //   healthy daily limit, then lose points gradually the further
+        //   over that limit they go, instead of losing 20 points the
+        //   instant they cross it.
+        function calculateHealthScore(calories, protein, carbs, fat) {
+            const proteinPoints = Math.min(25, (protein / 50) * 25);
+            const caloriePoints = 25 - Math.min(25, Math.max(0, (calories - 2000) / 40));
+            const fatPoints     = 25 - Math.min(25, Math.max(0, (fat - 70) / 2));
+            const carbPoints    = 25 - Math.min(25, Math.max(0, (carbs - 300) / 8));
+            const total = proteinPoints + caloriePoints + fatPoints + carbPoints;
+            return Math.max(0, Math.min(100, Math.round(total)));
+        }
+
         const healthScoreEl = document.getElementById("healthScore");
         const healthScoreHint = document.getElementById("healthScoreHint");
         if (data.length === 0) {
             healthScoreEl.textContent = "No data yet";
             if (healthScoreHint) healthScoreHint.style.display = "block";
         } else {
-            healthScoreEl.innerHTML = `${Math.max(score, 0)} <span class="panel-unit">/ 100</span>`;
+            const score = calculateHealthScore(totalCalories, totalProtein, totalCarbs, totalFat);
+            healthScoreEl.innerHTML = `${score} <span class="panel-unit">/ 100</span>`;
             if (healthScoreHint) healthScoreHint.style.display = "none";
         }
 
