@@ -1,6 +1,36 @@
 const API       = "http://localhost:3000/foods";
 const HIST_API  = "http://localhost:3000/history";
 const FOODDB_API = "http://localhost:3000/api/food-database";
+const AUTH_API  = "http://localhost:3000/api";
+
+// ── auth guard ────────────────────────────────────────────
+// Every page load starts by asking the server "who am I?" via the
+// session cookie. If there's no valid session, the server responds
+// 401 and we bounce to the login page before any food data loads.
+// credentials: "include" is what makes the browser send the session
+// cookie along with the request — without it every request would
+// look logged-out, even right after signing in.
+async function checkAuth() {
+    try {
+        const res = await fetch(`${AUTH_API}/me`, { credentials: "include" });
+        if (!res.ok) {
+            window.location.href = "login.html";
+            return null;
+        }
+        const data = await res.json();
+        const label = document.getElementById("usernameLabel");
+        if (label) label.textContent = data.username;
+        return data;
+    } catch (err) {
+        window.location.href = "login.html";
+        return null;
+    }
+}
+
+document.getElementById("logoutBtn").addEventListener("click", async () => {
+    await fetch(`${AUTH_API}/logout`, { method: "POST", credentials: "include" });
+    window.location.href = "login.html";
+});
 
 const form        = document.getElementById("foodForm");
 const table       = document.getElementById("foodTable");
@@ -131,7 +161,7 @@ let foodDatabaseByName = {};
 
 async function loadFoodDatabase() {
     try {
-        const res  = await fetch(FOODDB_API);
+        const res  = await fetch(FOODDB_API, { credentials: "include" });
         const data = await res.json();
         foodDatabaseByName = {};
         const datalist = document.getElementById("foodDatalist");
@@ -249,6 +279,7 @@ form.addEventListener("submit", async (e) => {
         const res = await fetch(API, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
+            credentials: "include",
             body: JSON.stringify({ name: food.name, quantity: qty })
         });
 
@@ -316,7 +347,7 @@ function showInsights(totalCalories, totalProtein, totalFat, totalCarbs, data) {
 // ── load foods ────────────────────────────────────────────
 async function loadFoods() {
     try {
-        const res  = await fetch(`${API}?date=${datePicker.value}`);
+        const res  = await fetch(`${API}?date=${datePicker.value}`, { credentials: "include" });
         const data = await res.json();
         allFoods = data;
 
@@ -358,7 +389,15 @@ async function loadFoods() {
         if (totalProtein  < 50)   score -= 20;
         if (totalFat      > 70)   score -= 20;
         if (totalCarbs    > 300)  score -= 20;
-        document.getElementById("healthScore").textContent = `${Math.max(score, 0)} / 100`;
+        const healthScoreEl = document.getElementById("healthScore");
+        const healthScoreHint = document.getElementById("healthScoreHint");
+        if (data.length === 0) {
+            healthScoreEl.textContent = "No data yet";
+            if (healthScoreHint) healthScoreHint.style.display = "block";
+        } else {
+            healthScoreEl.innerHTML = `${Math.max(score, 0)} <span class="panel-unit">/ 100</span>`;
+            if (healthScoreHint) healthScoreHint.style.display = "none";
+        }
 
         showInsights(totalCalories, totalProtein, totalFat, totalCarbs, data);
         renderFoods(data);
@@ -372,7 +411,7 @@ async function loadHistory() {
     const historyList = document.getElementById("historyList");
     historyList.innerHTML = `<p class="history-loading">Loading history…</p>`;
     try {
-        const res  = await fetch(HIST_API);
+        const res  = await fetch(HIST_API, { credentials: "include" });
         const days = await res.json();
 
         if (days.length === 0) {
@@ -425,7 +464,7 @@ searchInput.addEventListener("input", () => {
 
 // ── delete ────────────────────────────────────────────────
 async function deleteFood(id) {
-    await fetch(`${API}/${id}`, { method: "DELETE" });
+    await fetch(`${API}/${id}`, { method: "DELETE", credentials: "include" });
     loadFoods();
     loadHistory();
 }
@@ -447,6 +486,7 @@ async function editFood(id, name, calories, protein, carbs, fat) {
     await fetch(`${API}/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ name: newName, calories: newCalories, protein: newProtein, carbs: newCarbs, fat: newFat })
     });
     loadFoods();
@@ -454,6 +494,10 @@ async function editFood(id, name, calories, protein, carbs, fat) {
 }
 
 // ── init ──────────────────────────────────────────────────
-loadFoodDatabase();
-loadFoods();
-loadHistory();
+(async function init() {
+    const user = await checkAuth();
+    if (!user) return; // checkAuth already redirected to login.html
+    loadFoodDatabase();
+    loadFoods();
+    loadHistory();
+})();

@@ -283,6 +283,7 @@ nav a.active .nav-icon { opacity: 1; color: var(--green); }
 .panel-label { font-size: 11px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px; }
 .panel-value { font-size: 20px; font-weight: 700; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .panel-unit  { font-size: 13px; font-weight: 400; color: var(--text-muted); }
+.panel-hint  { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
 
 .goal-input-row { display: flex; gap: 8px; margin-bottom: 8px; }
 .goal-input-row input {
@@ -582,3 +583,69 @@ td button:nth-child(2):hover { background: rgba(248,113,113,0.2); }
 @media (max-width: 400px) {
   .dashboard { grid-template-columns: 1fr; }
 }
+/* ─── AUTH PAGE (login.html) ─── */
+.auth-body {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.auth-card {
+  width: 100%;
+  max-width: 380px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 32px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.auth-logo { justify-content: center; }
+.auth-tabs {
+  display: flex;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.auth-tab {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.auth-tab.active { background: rgba(74,222,128,0.12); color: var(--green); }
+.auth-form { display: flex; flex-direction: column; gap: 16px; }
+.auth-submit { justify-content: center; }
+.auth-error { font-size: 13px; color: var(--red); min-height: 16px; }
+
+/* ─── USER BADGE (index.html topbar) ─── */
+.user-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.user-badge-name { color: var(--text-primary); font-weight: 600; }
+.logout-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 13px;
+  font-family: inherit;
+  text-decoration: underline;
+  padding: 0;
+}
+.logout-btn:hover { color: var(--red); }

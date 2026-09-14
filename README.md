@@ -472,7 +472,7 @@ All endpoints return `500 Internal Server Error` with a plain-text message if a 
 ---
 
 ## 📸 Screenshots
-### Dashboard — Live Macro Stats
+### Dashboard — Live Macro Stats 
 ![Dashboard](screenshots/imagedashboard2.png)
 
 ### Meal History — 30-Day Log

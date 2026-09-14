@@ -84,6 +84,10 @@
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           Add Food
         </button>
+        <div class="user-badge">
+          <span>👤 <span id="usernameLabel" class="user-badge-name">—</span></span>
+          <button class="logout-btn" id="logoutBtn">Log out</button>
+        </div>
       </div>
     </header>
 
@@ -152,6 +156,7 @@
         <div class="panel-body">
           <h4 class="panel-label">Health Score</h4>
           <p id="healthScore" class="panel-value">0 <span class="panel-unit">/ 100</span></p>
+          <p id="healthScoreHint" class="panel-hint" style="display:none;">Log some food to calculate your health score.</p>
         </div>
       </div>
       <div class="panel">

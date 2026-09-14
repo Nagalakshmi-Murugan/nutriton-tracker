@@ -1,0 +1,31 @@
+-- ============================================================
+-- Migration: Authentication (Phase 3)
+-- ============================================================
+-- Run this AFTER food_units_migration.sql.
+-- Adds a users table and links each food log row to a user.
+-- Does NOT delete any existing food log data.
+-- ============================================================
+
+USE nutrition_tracker;
+
+-- ------------------------------------------------------------
+-- 1. users table
+--    password_hash stores a bcrypt hash — never the plain password.
+-- ------------------------------------------------------------
+CREATE TABLE users (
+    id            INT AUTO_INCREMENT PRIMARY KEY,
+    username      VARCHAR(50) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ------------------------------------------------------------
+-- 2. Link food logs to a user.
+--    Nullable at first so existing rows aren't touched by this
+--    statement alone — every current row becomes user_id = NULL.
+--    The app backfills these to the first registered user the
+--    moment that user signs up (see server.js /api/register).
+-- ------------------------------------------------------------
+ALTER TABLE foods
+  ADD COLUMN user_id INT NULL AFTER id,
+  ADD CONSTRAINT fk_foods_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
